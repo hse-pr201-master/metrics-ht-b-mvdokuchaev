@@ -12,6 +12,7 @@ library("car")
 library("hexbin")  # графики
 library("tidyverse") # вместо ggplot2 (графики) и dplyr (манипуляции с данными)
 library("rlms")  # загрузка данных в формате rlms (spss)
+library('caret')
 #Загружаем данные
 
 d <- read.table("C:/Users/MIKHAIL/Documents/R Coursera/homework/data.csv", sep = ",", header = TRUE)
@@ -105,7 +106,15 @@ d2 <- d2[-c(26), ]
 d2
 quantile(d2$seats, probs = seq(0, 1, 0.25), na.rm = TRUE)
 
+#МНК 
 
+d3 <- lm(data = d2, seats~ sratio + frate + gdp + educ)
+d3
+
+beta <- coef(d3)
+beta
+
+#К сожалению полностью справиться с обработкой данных не удалось. Поздно приступил к работе. И не успел
 
 #Займемся временными рядами
 
@@ -185,7 +194,26 @@ Pacf(y7)
 
 #пункт 5
 
-y8 <- arima.sim(n = 120, model = list(ar = 0.2, 0.3, 0.4, ma = 0.4, 0.5)
+y8 <- arima.sim(n = 120, model = list(ar = c(0.2, 0.3, 0.4), ma = c(0.4, 0.5)))
 
-help("arima.sim")
-plot.ts(y8)
+plot(y8)
+
+#ссылка на взятый код: https://stackoverflow.com/questions/17200114/how-to-split-data-into-training-testing-sets-using-sample-function
+## 75% of the sample size
+smp_size <- floor((1 - 1/6) * nrow(y8))
+
+## set the seed to make your partition reproducible
+data(y8)
+train_ind <- sample(seq_len(nrow(y8)), size = smp_size)
+
+train <- mtcars[train_ind, ]
+test <- mtcars[-train_ind, ]
+
+train
+
+model_1 <- Arima(train, order = c(2, 0, 3))
+
+y_hat = forecast(model_1, h = 20)
+
+plot(y_hat, test)
+
